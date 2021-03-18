@@ -1,6 +1,7 @@
 package rtmp
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -158,9 +159,14 @@ func (s *Server) handleConn(conn *core.Conn) error {
 			s.handler.HandleWriter(flvWriter.GetWriter(reader.Info()))
 		}
 	} else {
-		writer := NewVirWriter(connServer)
-		log.Debugf("new player: %+v", writer.Info())
-		s.handler.HandleWriter(writer)
+		// reject rtmp pull request
+		err := errors.New("pull stream through rtmp port")
+		conn.Close()
+		log.Error("handleConn read msg err: ", err)
+		return err
+		//writer := NewVirWriter(connServer)
+		//log.Debugf("new player: %+v", writer.Info())
+		//s.handler.HandleWriter(writer)
 	}
 
 	return nil
