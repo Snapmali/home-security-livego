@@ -42,6 +42,7 @@ type JWT struct {
 type ServerCfg struct {
 	Level           string       `mapstructure:"level"`
 	ConfigFile      string       `mapstructure:"config_file"`
+	AuthServerUrl   string       `mapstructure:"auth_server_url"`
 	FLVArchive      bool         `mapstructure:"flv_archive"`
 	FLVDir          string       `mapstructure:"flv_dir"`
 	RTMPNoAuth      bool         `mapstructure:"rtmp_noauth"`
@@ -62,8 +63,9 @@ type ServerCfg struct {
 // default config
 var defaultConf = ServerCfg{
 	ConfigFile:      "livego.yaml",
-	FLVArchive:	false,
-	RTMPNoAuth:	false,
+	AuthServerUrl:   "http://127.0.0.1:7777",
+	FLVArchive:      false,
+	RTMPNoAuth:      false,
 	RTMPAddr:        ":1935",
 	HTTPFLVAddr:     ":7001",
 	HLSAddr:         ":7002",

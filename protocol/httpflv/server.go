@@ -2,6 +2,7 @@ package httpflv
 
 import (
 	"encoding/json"
+	"github.com/gwuhaolin/livego/protocol/authentication"
 	"net"
 	"net/http"
 	"strings"
@@ -34,9 +35,9 @@ func NewServer(h av.Handler) *Server {
 
 func (server *Server) Serve(l net.Listener) error {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/", authentication.HttpInterceptor(func(w http.ResponseWriter, r *http.Request) {
 		server.handleConn(w, r)
-	})
+	}))
 	mux.HandleFunc("/streams", func(w http.ResponseWriter, r *http.Request) {
 		server.getStream(w, r)
 	})

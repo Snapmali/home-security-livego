@@ -160,7 +160,7 @@ func (s *Server) handleConn(conn *core.Conn) error {
 		}
 	} else {
 		// reject rtmp pull request
-		err := errors.New("pull stream through rtmp port")
+		err := errors.New("pulling stream with rtmp protocol")
 		conn.Close()
 		log.Error("handleConn read msg err: ", err)
 		return err
