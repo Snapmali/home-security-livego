@@ -49,6 +49,8 @@ type Claims struct {
 
 func HttpInterceptor(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		h(w, r)
+		return
 		res := Response{
 			w:      w,
 			Status: http.StatusOK,

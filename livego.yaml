@@ -1,5 +1,5 @@
 # # Logger level
-# level: info
+level: debug
 
 auth_server_url: "http://127.0.0.1:7777"
 
@@ -10,7 +10,7 @@ httpflv_addr: "0.0.0.0:7001"
 
 # # RTMP Options
 # rtmp_noauth: false
-rtmp_addr: "0.0.0.0:2001"
+rtmp_addr: "0.0.0.0:1935"
 read_timeout: 10
 write_timeout: 10
 
@@ -23,6 +23,6 @@ api_addr: "127.0.0.1:8090"
 server:
 - appname: live
   live: true
-  hls: true
+  hls: false
   api: true
   flv: true

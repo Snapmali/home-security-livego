@@ -54,6 +54,12 @@ type Server struct {
 	rtmpAddr string
 }
 
+type streamStat struct {
+	Key       string   `json:"key"`
+	Publisher string   `json:"publisher"`
+	Players   []string `json:"players"`
+}
+
 func NewServer(h av.Handler, rtmpAddr string) *Server {
 	return &Server{
 		handler:  h,
@@ -123,6 +129,9 @@ func (s *Server) Serve(l net.Listener) error {
 	mux.HandleFunc("/stat/livestat", func(w http.ResponseWriter, r *http.Request) {
 		s.GetLiveStatics(w, r)
 	})
+	mux.HandleFunc("/stat/roomstat", func(w http.ResponseWriter, r *http.Request) {
+		s.GetRoomStatics(w, r)
+	})
 	http.Serve(l, JWTMiddleware(mux))
 	return nil
 }
@@ -140,6 +149,54 @@ type stream struct {
 type streams struct {
 	Publishers []stream `json:"publishers"`
 	Players    []stream `json:"players"`
+}
+
+func (server *Server) GetRoomStatics(w http.ResponseWriter, r *http.Request) {
+	res := &Response{
+		w:      w,
+		Data:   nil,
+		Status: 200,
+	}
+	defer res.SendJson()
+
+	if err := r.ParseForm(); err != nil {
+		res.Status = 400
+		res.Data = "url: /stat/roomstat?app=<APP_NAME>&room=<ROOM_NAME>"
+		return
+	}
+
+	rtmpStream := server.handler.(*rtmp.RtmpStream)
+	if rtmpStream == nil {
+		res.Status = 500
+		res.Data = "Get rtmp stream information error"
+		return
+	}
+
+	msgs := new(streamStat)
+
+	appname := r.Form.Get("app")
+	room := r.Form.Get("room")
+	key := fmt.Sprintf("%s/%s", appname, room)
+	msgs.Key = key
+	if val, ok := rtmpStream.GetStreams().Load(key); ok {
+		if s, ok := val.(*rtmp.Stream); ok {
+			if s.GetReader() != nil {
+				publisherId := s.GetReader().Info().UID
+				msgs.Publisher = publisherId
+				ws := s.GetWs()
+				ws.Range(func(k, v interface{}) bool {
+					if pw, ok := v.(*rtmp.PackWriterCloser); ok {
+						if pw.GetWriter() != nil && pw.GetWriter().Info().UID != publisherId {
+							msgs.Players = append(msgs.Players, pw.GetWriter().Info().UID)
+						}
+					}
+					return true
+				})
+			}
+		}
+	}
+	res.Data = msgs
+
 }
 
 //http://127.0.0.1:8090/stat/livestat
@@ -179,6 +236,7 @@ func (server *Server) GetLiveStatics(w http.ResponseWriter, req *http.Request) {
 	rtmpStream.GetStreams().Range(func(key, val interface{}) bool {
 		ws := val.(*rtmp.Stream).GetWs()
 		ws.Range(func(k, v interface{}) bool {
+			fmt.Println(k, " ", v)
 			if pw, ok := v.(*rtmp.PackWriterCloser); ok {
 				if pw.GetWriter() != nil {
 					switch pw.GetWriter().(type) {
